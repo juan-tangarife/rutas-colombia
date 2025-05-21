@@ -133,6 +133,38 @@ const ListadoRepartidores = () => {
   const [activoFilter, setActivoFilter] = useState(null);
   const [entregasHoyFilter, setEntregasHoyFilter] = useState(null);
 
+    useEffect(() => {
+    let filtered = [...repartidores];
+    
+    // Filtrar por departamento y ciudad si se ha seleccionado
+    if (ubicacionFilter && ubicacionFilter.length > 0) {
+      const departamento = ubicacionFilter[0];
+      const ciudad = ubicacionFilter.length > 1 ? ubicacionFilter[1] : null;
+      
+      filtered = filtered.filter(rep => rep.departamento === departamento);
+      
+      if (ciudad) {
+        filtered = filtered.filter(rep => rep.ciudad === ciudad);
+      }
+    }
+    
+    // Filtrar por estado activo/inactivo
+    if (activoFilter !== null) {
+      filtered = filtered.filter(rep => rep.activo === activoFilter);
+    }
+    
+    // Filtrar por entregas de hoy
+    if (entregasHoyFilter !== null) {
+      if (entregasHoyFilter) {
+        filtered = filtered.filter(rep => rep.pedidosHoy > 0);
+      } else {
+        filtered = filtered.filter(rep => rep.pedidosHoy === 0);
+      }
+    }
+    
+    setFilteredRepartidores(filtered);
+  }, [repartidores, ubicacionFilter, activoFilter, entregasHoyFilter]);
+
   const columns = [
     {
       title: 'ID',
