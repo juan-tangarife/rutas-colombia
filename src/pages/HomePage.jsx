@@ -62,7 +62,7 @@ const HomePage = () => {
     return (
         <div style={{ padding: '24px', maxWidth: '600px', margin: '0 auto',
         marginTop: '50px' }}>
-            <Card title="Buscar Rutas en Colombia" bordered={true}>
+            <Card title="Buscar Rutas en Colombia" variant='outlined'>
                 <div style={{ marginBottom: '20px' }}>
                     <h3>Origen</h3>
                     <LocationInput

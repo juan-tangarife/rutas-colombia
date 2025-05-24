@@ -63,7 +63,7 @@ const LocationInput = ({ placeholder, value, onChange, onSelect }) => {
                 />
             </div>
             )}
-            <style jsx>{`
+            <style>{`
                 .location-input {
                 position: relative;
                 width: 100%;

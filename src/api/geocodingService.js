@@ -1,6 +1,6 @@
 import axios from "axios";
 const corsProxy = 'https://cors-anywhere.herokuapp.com/';
-const API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY;
+const API_KEY = import.meta.env.REACT_APP_GOOGLE_MAPS_API_KEY || import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
 export const geocodeAddress = async ({
     address,

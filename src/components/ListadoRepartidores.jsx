@@ -31,6 +31,8 @@ import {
   InfoCircleOutlined
 } from '@ant-design/icons';
 
+const { Title, Text } = Typography;
+
 const mockRepartidores = [
   { 
     id: 1, 
@@ -121,6 +123,84 @@ const ubicacionesOptions = [
   }
 ];
 
+const mockPedidos = [
+  { 
+    id: 1, 
+    cliente: 'Juan Castro', 
+    direccion: 'Calle 10 #15-30', 
+    ciudad: 'Manizales', 
+    departamento: 'Caldas',
+    fechaEntrega: '2025-05-20',
+    almacen: {
+      id: 101,
+      nombre: 'SuperMarket Centro',
+      direccion: 'Plaza Principal #33-45',
+      telefono: '606-885-4321',
+      contacto: 'Martín Soto'
+    }
+  },
+  { 
+    id: 2, 
+    cliente: 'Laura Díaz', 
+    direccion: 'Avenida 5 #20-15', 
+    ciudad: 'Manizales', 
+    departamento: 'Caldas',
+    fechaEntrega: '2025-05-21',
+    almacen: {
+      id: 102,
+      nombre: 'MercadoExpress Chipre',
+      direccion: 'Carrera 8 #12-05',
+      telefono: '606-887-6543',
+      contacto: 'Carmen Valencia'
+    }
+  },
+  { 
+    id: 3, 
+    cliente: 'Ricardo Álvarez', 
+    direccion: 'Carrera 7 #8-12', 
+    ciudad: 'Medellín', 
+    departamento: 'Antioquia',
+    fechaEntrega: '2025-05-20',
+    almacen: {
+      id: 201,
+      nombre: 'SuperTienda El Poblado',
+      direccion: 'Calle 10 #43-23',
+      telefono: '604-234-5678',
+      contacto: 'Juan Restrepo'
+    }
+  },
+  { 
+    id: 4, 
+    cliente: 'Diana Torres', 
+    direccion: 'Calle 45 #23-10', 
+    ciudad: 'Bogotá', 
+    departamento: 'Cundinamarca',
+    fechaEntrega: '2025-05-20',
+    almacen: {
+      id: 301,
+      nombre: 'MegaMarket Chapinero',
+      direccion: 'Carrera 13 #63-40',
+      telefono: '601-321-7654',
+      contacto: 'Patricia Gómez'
+    }
+  },
+  { 
+    id: 5, 
+    cliente: 'Fernando Gil', 
+    direccion: 'Carrera 12 #34-56', 
+    ciudad: 'Chinchiná', 
+    departamento: 'Caldas',
+    fechaEntrega: '2025-05-22',
+    almacen: {
+      id: 103,
+      nombre: 'MiniMarket La Estación',
+      direccion: 'Avenida Ferrocarril #12-30',
+      telefono: '606-850-1234',
+      contacto: 'Roberto Sánchez'
+    }
+  }
+];
+
 
 const ListadoRepartidores = () => {
   const [repartidores, setRepartidores] = useState(mockRepartidores);
@@ -164,6 +244,37 @@ const ListadoRepartidores = () => {
     
     setFilteredRepartidores(filtered);
   }, [repartidores, ubicacionFilter, activoFilter, entregasHoyFilter]);
+
+  const getPedidosPorCiudad = (ciudad) => {
+    return pedidosDisponibles.filter(pedido => 
+      pedido.ciudad === ciudad
+    );
+  };
+
+  const showAsignarPedidoDrawer = (repartidor) => {
+    if (!repartidor.activo) {
+      notification.warning({
+        message: 'Repartidor Inactivo',
+        description: 'No se pueden asignar pedidos a repartidores inactivos.',
+      });
+      return;
+    }
+    
+    setRepartidorSeleccionado(repartidor);
+    const pedidosCiudad = getPedidosPorCiudad(repartidor.ciudad);
+    
+    if (pedidosCiudad.length === 0) {
+      notification.info({
+        message: 'Sin Pedidos Disponibles',
+        description: `No hay pedidos disponibles en ${repartidor.ciudad} para asignar.`,
+      });
+      return;
+    }
+    
+    // Limpiar selección anterior
+    setPedidoSeleccionado(null);
+    setDrawerVisible(true);
+  };
 
   const columns = [
     {
@@ -242,10 +353,238 @@ const ListadoRepartidores = () => {
     },
   ];
 
+  // Seleccionar un pedido 
+  const handleSelectPedido = (pedido) => {
+    setPedidoSeleccionado(pedido);
+  };
 
+  // Manejar la asignación del pedido
+  const handleAsignarPedido = () => {
+    if (!pedidoSeleccionado) {
+      notification.error({
+        message: 'Error',
+        description: 'Por favor seleccione un pedido para asignar.',
+      });
+      return;
+    }
+      
+    // Actualizar la lista de pedidos disponibles (eliminar el asignado)
+    setPedidosDisponibles(pedidosDisponibles.filter(p => p.id !== pedidoSeleccionado.id));
+    
+    // Determinar si el pedido es para hoy
+    const fechaHoy = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+    const esParaHoy = pedidoSeleccionado.fechaEntrega === fechaHoy;
+    
+    // Actualizar el contador de pedidos pendientes del repartidor
+    const updatedRepartidores = repartidores.map(rep => {
+      if (rep.id === repartidorSeleccionado.id) {
+        return { 
+          ...rep, 
+          pedidosPendientes: rep.pedidosPendientes + 1,
+          pedidosHoy: esParaHoy ? rep.pedidosHoy : rep.pedidosHoy
+        };
+      }
+      return rep;
+    });
+    
+    setRepartidores(updatedRepartidores);
+    
+    notification.success({
+      message: 'Pedido Asignado',
+      description: `Pedido #${pedidoSeleccionado.id} asignado a ${repartidorSeleccionado.nombre} exitosamente.`,
+    });
+    
+    setDrawerVisible(false);
+    setPedidoSeleccionado(null);
+  };
+
+
+  const toggleEstadoRepartidor = (repartidor) => {
+    const updatedRepartidores = repartidores.map(rep => {
+      if (rep.id === repartidor.id) {
+        return { ...rep, activo: !rep.activo };
+      }
+      return rep;
+    });
+    
+    setRepartidores(updatedRepartidores);
+    
+    notification.success({
+      message: 'Estado Actualizado',
+      description: `${repartidor.nombre} ahora está ${!repartidor.activo ? 'activo' : 'inactivo'}.`,
+    });
+  };
+  
+  const resetFilters = () => {
+    setUbicacionFilter([]);
+    setActivoFilter(null);
+    setEntregasHoyFilter(null);
+  };
+
+  const renderPedidoCard = (pedido) => {
+    const fechaHoy = new Date().toISOString().split('T')[0];
+    const esHoy = pedido.fechaEntrega === fechaHoy;
+    const isSelected = pedidoSeleccionado && pedidoSeleccionado.id === pedido.id;
+    
+    return (
+      <Card 
+        key={pedido.id}
+        style={{ 
+          marginBottom: '16px', 
+          cursor: 'pointer',
+          border: isSelected ? '2px solid #1890ff' : '1px solid #f0f0f0',
+          boxShadow: isSelected ? '0 2px 8px rgba(24, 144, 255, 0.3)' : 'none'
+        }}
+        hoverable
+        onClick={() => handleSelectPedido(pedido)}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+          <div>
+            <Tag color="blue">Pedido #{pedido.id}</Tag>
+            {esHoy && <Tag color="red">HOY</Tag>}
+          </div>
+          {isSelected && <Tag color="green">Seleccionado</Tag>}
+        </div>
+        
+        <p><strong>Cliente:</strong> {pedido.cliente}</p>
+        <p><EnvironmentOutlined /> <strong>Dirección:</strong> {pedido.direccion}</p>
+        <p><CalendarOutlined /> <strong>Fecha Entrega:</strong> {pedido.fechaEntrega}</p>
+        
+        <Divider style={{ margin: '10px 0' }} />
+        
+        <div style={{ backgroundColor: '#fafafa', padding: '10px', borderRadius: '4px' }}>
+          <p style={{ margin: 0 }}><ShopOutlined /> <strong>Almacén:</strong> {pedido.almacen.nombre}</p>
+          <p style={{ margin: 0, fontSize: '12px', color: '#666' }}>
+            <PhoneOutlined /> {pedido.almacen.telefono} • <UserOutlined /> {pedido.almacen.contacto}
+          </p>
+        </div>
+      </Card>
+    );
+  };
+  
 
   return (
     <div style={{ padding: '20px' }}>
+        <Card>
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <Space style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+            <Title level={4}>Gestión de Repartidores</Title>
+            <Space>
+              <Button icon={<ReloadOutlined />} onClick={resetFilters}>
+                Resetear Filtros
+              </Button>
+            </Space>
+          </Space>
+          
+          <Space style={{ marginBottom: '16px' }}>
+            <Text strong><FilterOutlined /> Filtros:</Text>
+            <Cascader
+              options={ubicacionesOptions}
+              onChange={value => setUbicacionFilter(value)}
+              placeholder="Departamento / Ciudad"
+              value={ubicacionFilter}
+              style={{ width: 250 }}
+            />
+            <Select
+              placeholder="Estado"
+              style={{ width: 120 }}
+              onChange={value => setActivoFilter(value)}
+              value={activoFilter}
+              allowClear
+            >
+              <Select.Option value={true}>Activo</Select.Option>
+              <Select.Option value={false}>Inactivo</Select.Option>
+            </Select>
+            <Select
+              placeholder="Entregas Hoy"
+              style={{ width: 150 }}
+              onChange={value => setEntregasHoyFilter(value)}
+              value={entregasHoyFilter}
+              allowClear
+            >
+              <Select.Option value={true}>Con entregas hoy</Select.Option>
+              <Select.Option value={false}>Sin entregas hoy</Select.Option>
+            </Select>
+          </Space>
+          
+          <Table 
+            columns={columns} 
+            dataSource={filteredRepartidores} 
+            rowKey="id"
+            pagination={{ pageSize: 5 }}
+          />
+        </Space>
+      </Card>
+      <Drawer 
+        title={`Asignar Pedido a ${repartidorSeleccionado ? repartidorSeleccionado.nombre : ''}`}
+        width={650}
+        placement="right"
+        onClose={() => {
+          setDrawerVisible(false);
+          setPedidoSeleccionado(null);
+        }}
+        open={drawerVisible}
+        extra={
+          <Space>
+            <Button onClick={() => {
+              setDrawerVisible(false);
+              setPedidoSeleccionado(null);
+            }}>
+              Cancelar
+            </Button>
+            <Button 
+              type="primary" 
+              onClick={handleAsignarPedido}
+              disabled={!pedidoSeleccionado}
+            >
+              Asignar Pedido
+            </Button>
+          </Space>
+        }
+      >
+        {repartidorSeleccionado && (
+          <>
+            <Card style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '10px' }}>
+                <UserOutlined style={{ fontSize: '24px', marginRight: '10px' }} />
+                <div>
+                  <Typography.Title level={5} style={{ margin: 0 }}>{repartidorSeleccionado.nombre}</Typography.Title>
+                  <Typography.Text type="secondary">{repartidorSeleccionado.telefono}</Typography.Text>
+                </div>
+              </div>
+              <Divider style={{ margin: '10px 0' }} />
+              <p><EnvironmentOutlined /> <strong>Ubicación:</strong> {repartidorSeleccionado.ciudad}, {repartidorSeleccionado.departamento}</p>
+              <Space>
+                <Tag color="blue">Pedidos Pendientes: {repartidorSeleccionado.pedidosPendientes}</Tag>
+                <Tag color="orange">Entregas Hoy: {repartidorSeleccionado.pedidosHoy}</Tag>
+              </Space>
+            </Card>
+            
+            <Typography.Title level={5}>
+              <Space>
+                <ShoppingCartOutlined />
+                Pedidos Disponibles en {repartidorSeleccionado.ciudad}
+              </Space>
+            </Typography.Title>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <Row>
+                <Col span={24}>
+                  <Typography.Text type="secondary">
+                    <InfoCircleOutlined /> Selecciona el pedido que deseas asignar a este repartidor
+                  </Typography.Text>
+                </Col>
+              </Row>
+            </div>
+            
+            {getPedidosPorCiudad(repartidorSeleccionado.ciudad).length > 0 ? (
+              getPedidosPorCiudad(repartidorSeleccionado.ciudad).map(pedido => renderPedidoCard(pedido))
+            ) : (
+              <Empty description="No hay pedidos disponibles para esta ciudad" />
+            )}
+          </>
+        )}
+      </Drawer>
 </div>
   )
 }

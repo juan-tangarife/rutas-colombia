@@ -7,8 +7,8 @@ import { GoogleMap, useJsApiLoader, Marker, DirectionsRenderer } from
 '@react-google-maps/api';
 import { getDirections } from '../api/directionsService';
 import { useNavigate } from 'react-router-dom';
-const API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY ||
-process.env.VITE_GOOGLE_MAPS_API_KEY;
+const API_KEY = import.meta.env.REACT_APP_GOOGLE_MAPS_API_KEY ||
+import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 const containerStyle = {
     width: '100%',
     height: '500px'
