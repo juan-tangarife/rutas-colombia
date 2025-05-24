@@ -1,5 +1,5 @@
 import axios from "axios";
-require("dotenv").config();
+
 
 const API_KEY = import.meta.env.REACT_APP_GOOGLE_MAPS_API_KEY || import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
